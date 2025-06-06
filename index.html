@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Hero</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);  
+      color: white;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 1s ease-in-out;
+    }
+    h1.header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: #00adb5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-title {
+      flex-grow: 1;
+      text-align: center;
+    }
+    select.theme-switcher {
+      font-size: 0.9rem;
+      padding: 5px 10px;
+      border-radius: 10px;
+      margin-left: auto;
+      cursor: pointer;
+    }
+    input, button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    input {
+      background: #fff;
+      color: #000;
+      width: 100%;
+    }
+    button {
+      background: #00adb5;
+      color: white;
+    }
+    button:hover {
+      background: #00787a;
+    }
+    .hidden {
+      display: none;
+    }
+    .level {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      animation: slideUp 0.6s ease-in-out;
+    }
+    .question {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .choice {
+      background: #fff;
+      color: #000;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .choice:hover {
+      transform: scale(1.05);
+    }
+    .feedback {
+      margin-top: 15px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .correct {
+      color: lightgreen;
+    }
+    .wrong {
+      color: lightcoral;
+    }
+    .lives {
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+    .progress-bar {
+      background: #444;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    #progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #00adb5;
+      transition: width 0.3s ease;
+    }
+    .badge-display {
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #ccc;
+    }
+    .timer {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes slideUp {
+      from {transform: translateY(30px); opacity: 0;}
+      to {transform: translateY(0); opacity: 1;}
+    }
+    /* Victory Screen */
+    .victory {
+      text-align: center;
+      padding: 40px;
+    }
+    canvas.confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+    /* Themes */
+    body.dark {
+      background: #111;
+      color: white;
+    }
+    body.neon {
+      background: black;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+    }
+    body.retro {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+      <h1 class="header">Welcome to <span class="header-title">Code Hero</span></h1>
+      <p>Learn HTML & CSS by playing!</p>
+      <input type="text" id="username" placeholder="Enter your username" required/>
+      <button onclick="startGame()">Start Game</button>
+    </div>
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden">
+      <h1 class="header">
+        <span class="header-title">Level <span id="level-number">1</span></span>
+        <select class="theme-switcher" onchange="setTheme(this.value)">
+          <option value="">Theme</option>
+          <option value="dark">Dark</option>
+          <option value="neon">Neon</option>
+          <option value="retro">Retro</option>
+        </select>
+      </h1>
+      <div class="lives" id="lives-display"></div>
+      <div class="badge-display" id="badge-display">Badge: Novice</div>
+      <div class="progress-bar"><div id="progress-fill"></div></div>
+      <label><input type="checkbox" id="time-mode"> Enable Time Attack</label>
+      <div id="timer" class="timer hidden">Time Left: <span id="time-left">60</span>s</div>
+      <div id="level-container"></div>
+    </div>
+    <!-- Blocked Screen -->
+    <div id="blocked-screen" class="hidden">
+      <h1>You’re Locked Out</h1>
+      <p>Please wait <span id="countdown-timer">3:00:00</span> before retrying.</p>
+    </div>
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="hidden victory">
+      <canvas class="confetti-canvas"></canvas>
+      <h1>Congratulations, <span id="final-username"></span>!</h1>
+      <p>You completed all levels of Code Hero 🎉</p>
+      <button onclick="shareOnWhatsApp()">Share on WhatsApp</button>
+    </div>
+  </div>
+  <script>
+    // === FULL LEVELS LIST (250 Levels) ===
+    const rawLevels = [
+      { question: "Which tag defines the largest heading?", choices: ["<h1>", "<h6>", "<header>", "<hgroup>"], answer: "<h1>" },
+      { question: "Which tag creates a paragraph?", choices: ["<p>", "<para>", "<br>", "<section>"], answer: "<p>" },
+      { question: "What tag is used for a line break?", choices: ["<lb>", "<break>", "<br>", "<line>"], answer: "<br>" },
+      { question: "Which tag is used for links?", choices: ["<link>", "<href>", "<url>", "<a>"], answer: "<a>" },
+      { question: "Which tag contains metadata about the document?", choices: ["<head>", "<meta>", "<title>", "<html>"], answer: "<head>" },
+      { question: "Which tag defines a container for an external application?", choices: ["<iframe>", "<object>", "<embed>", "<canvas>"], answer: "<iframe>" },
+      { question: "Which tag represents a thematic break?", choices: ["<hr>", "<br>", "<div>", "<separator>"], answer: "<hr>" },
+      { question: "Which tag defines a section in a document?", choices: ["<section>", "<article>", "<div>", "<main>"], answer: "<section>" },
+      { question: "Which tag defines a self-contained content like an image?", choices: ["<figure>", "<img>", "<picture>", "<aside>"], answer: "<figure>" },
+      { question: "Which tag defines a caption for a figure element?", choices: ["<figcaption>", "<caption>", "<label>", "<title>"], answer: "<figcaption>" },
+      { question: "Which tag defines a footer for a document or section?", choices: ["<footer>", "<bottom>", "<end>", "<foot>"], answer: "<footer>" },
+      { question: "Which tag defines a header for a document or section?", choices: ["<header>", "<top>", "<head>", "<banner>"], answer: "<header>" },
+      { question: "Which tag specifies independent, self-contained content?", choices: ["<article>", "<section>", "<div>", "<content>"], answer: "<article>" },
+      { question: "Which tag defines a list item?", choices: ["<li>", "<item>", "<list>", "<il>"], answer: "<li>" },
+      { question: "Which tag defines an ordered list?", choices: ["<ol>", "<ul>", "<list>", "<order>"], answer: "<ol>" },
+      { question: "Which tag defines an unordered list?", choices: ["<ul>", "<ol>", "<list>", "<unorder>"], answer: "<ul>" },
+      { question: "Which tag defines bold text without importance?", choices: ["<b>", "<strong>", "<bold>", "<em>"], answer: "<b>" },
+      { question: "Which tag defines emphasized text?", choices: ["<em>", "<i>", "<italic>", "<emphasis>"], answer: "<em>" },
+      { question: "Which tag defines important text?", choices: ["<strong>", "<b>", "<highlight>", "<important>"], answer: "<strong>" },
+      { question: "Which tag defines italic text?", choices: ["<i>", "<em>", "<italic>", "<font-style='italic'>"], answer: "<i>" },
+      { question: "Which tag defines a computer code snippet?", choices: ["<code>", "<kbd>", "<samp>", "<var>"], answer: "<code>" },
+      { question: "Which tag defines a clickable button?", choices: ["<button>", "<input>", "<submit>", "<click>"], answer: "<button>" },
+      { question: "Which tag defines a form?", choices: ["<form>", "<input>", "<field>", "<entry>"], answer: "<form>" },
+      { question: "Which tag defines a drop-down list?", choices: ["<select>", "<dropdown>", "<menu>", "<list>"], answer: "<select>" },
+      { question: "Which tag defines a table row?", choices: ["<tr>", "<td>", "<th>", "<table-row>"], answer: "<tr>" },
+      { question: "Which tag defines a table cell?", choices: ["<td>", "<tr>", "<th>", "<cell>"], answer: "<td>" },
+      { question: "Which tag defines a scalar measurement within a known range?", choices: ["<meter>", "<progress>", "<gauge>", "<range>"], answer: "<meter>" },
+      { question: "Which tag defines a progress bar?", choices: ["<progress>", "<meter>", "<bar>", "<loading>"], answer: "<progress>" },
+      { question: "Which tag groups header cells in a table?", choices: ["<thead>", "<tbody>", "<tfoot>", "<table-header>"], answer: "<thead>" },
+      { question: "Which tag defines a label for an input element?", choices: ["<label>", "<name>", "<title>", "<description>"], answer: "<label>" },
+      { question: "Which tag defines preformatted text?", choices: ["<pre>", "<code>", "<text>", "<raw>"], answer: "<pre>" },
+      { question: "Which tag defines a short quotation?", choices: ["<q>", "<quote>", "<blockq>", "<short>"], answer: "<q>" },
+      { question: "Which tag defines a long quotation?", choices: ["<blockquote>", "<q>", "<quote>", "<long>"], answer: "<blockquote>" },
+      { question: "Which tag defines a bidirectional override for text direction?", choices: ["<bdo>", "<dir>", "<rtl>", "<ltr>"], answer: "<bdo>" },
+      { question: "Which tag defines a client-side image map?", choices: ["<map>", "<area>", "<imgmap>", "<imagemap>"], answer: "<map>" },
+      { question: "Which tag defines a clickable area inside an image map?", choices: ["<area>", "<map>", "<region>", "<click>"], answer: "<area>" },
+      { question: "Which tag defines parameters for object elements?", choices: ["<param>", "<object>", "<config>", "<setting>"], answer: "<param>" },
+      { question: "Which tag defines a group of commands?", choices: ["<menu>", "<command>", "<nav>", "<toolbar>"], answer: "<menu>" },
+      { question: "Which tag defines a dialog box or window?", choices: ["<dialog>", "<popup>", "<modal>", "<window>"], answer: "<dialog>" },
+      { question: "Which tag defines a ruby annotation for East Asian typography?", choices: ["<ruby>", "<rt>", "<rb>", "<annotation>"], answer: "<ruby>" },
+      { question: "Which tag defines explanation/pronunciation of characters in <ruby>?", choices: ["<rt>", "<rp>", "<rb>", "<ruby>"], answer: "<rt>" },
+      { question: "Which tag defines fallback parentheses for browsers not supporting <ruby>?", choices: ["<rp>", "<rt>", "<rb>", "<ruby>"], answer: "<rp>" },
+      { question: "Which tag defines a base font for the document?", choices: ["<basefont>", "<font>", "<style>", "<text>"], answer: "<basefont>" },
+      { question: "Which tag defines strike-through text?", choices: ["<s>", "<strike>", "<del>", "<cross>"], answer: "<s>" },
+      { question: "Which tag defines subscripted text?", choices: ["<sub>", "<sup>", "<lower>", "<small>"], answer: "<sub>" },
+      { question: "Which tag defines superscripted text?", choices: ["<sup>", "<sub>", "<upper>", "<big>"], answer: "<sup>" },
+      { question: "Which tag defines typewriter text?", choices: ["<tt>", "<code>", "<mono>", "<fixed>"], answer: "<tt>" },
+      { question: "Which tag defines a no-break space?", choices: ["&nbsp;", "&ensp;", "&emsp;", "&space;"], answer: "&nbsp;" },
+      { question: "Which tag defines a non-breaking hyphen?", choices: ["&shy;", "&ndash;", "&mdash;", "&hyphen;"], answer: "&shy;" },
+      { question: "Which tag defines an en dash character?", choices: ["&ndash;", "&mdash;", "&dash;", "&minus;"], answer: "&ndash;" },
+      { question: "Which tag defines an em dash character?", choices: ["&mdash;", "&ndash;", "&dash;", "&minus;"], answer: "&mdash;" },
+      { question: "Which tag defines a copyright symbol (©)?", choices: ["&copy;", "&reg;", "&trade;", "&c;"], answer: "&copy;" },
+      { question: "Which tag defines a registered trademark symbol (®)?", choices: ["&reg;", "&trade;", "&tm;", "&r;"], answer: "&reg;" },
+      { question: "Which tag defines a trademark symbol (™)?", choices: ["&trade;", "&reg;", "&tm;", "&t;"], answer: "&trade;" },
+      { question: "Which tag defines a left double quote (“)?", choices: ["&ldquo;", "&rdquo;", "&quot;", "&lquote;"], answer: "&ldquo;" },
+      { question: "Which tag defines a right double quote (”)?", choices: ["&rdquo;", "&ldquo;", "&quot;", "&rquote;"], answer: "&rdquo;" },
+      { question: "Which tag defines a left single quote (‘)?", choices: ["&lsquo;", "&rsquo;", "&apos;", "&lquote;"], answer: "&lsquo;" },
+      { question: "Which tag defines a right single quote (’)?", choices: ["&rsquo;", "&lsquo;", "&apos;", "&rquote;"], answer: "&rsquo;" },
+      { question: "Which tag defines a less-than sign (<)?", choices: ["<", ">", "&amp;", "&lt_sign;"], answer: "<" },
+      { question: "Which tag defines a greater-than sign (>)?", choices: [">", "<", "&amp;", "&gt_sign;"], answer: ">" },
+      { question: "Which tag defines an ampersand (&)?", choices: ["&amp;", "&at;", "&plus;", "&and;"], answer: "&amp;" },
+      { question: "Which tag defines a euro currency symbol (€)?", choices: ["&euro;", "&yen;", "&pound;", "&dollar;"], answer: "&euro;" },
+      { question: "Which tag defines a yen currency symbol (¥)?", choices: ["&yen;", "&euro;", "&pound;", "&dollar;"], answer: "&yen;" },
+      { question: "Which tag defines a pound currency symbol (£)?", choices: ["&pound;", "&yen;", "&euro;", "&dollar;"], answer: "&pound;" },
+      { question: "Which tag defines a dollar currency symbol ($)?", choices: ["$", "&dollar;", "&usd;", "&currency;"], answer: "$" },
+      { question: "Which tag defines a degree symbol (°)?", choices: ["&deg;", "&degree;", "&circle;", "&angle;"], answer: "&deg;" },
+      { question: "Which tag defines a plus-minus symbol (±)?", choices: ["&plusmn;", "&pm;", "&plus_minus;", "&sign;"], answer: "&plusmn;" },
+      { question: "Which tag defines a multiplication symbol (×)?", choices: ["&times;", "&mult;", "&x;", "&multiply;"], answer: "&times;" },
+      { question: "Which tag defines a division symbol (÷)?", choices: ["&divide;", "&div;", "&slash;", "&division;"], answer: "&divide;" },
+      { question: "Which tag defines a bullet point (•)?", choices: ["&bull;", "&bullet;", "&dot;", "&point;"], answer: "&bull;" },
+      { question: "Which tag defines a horizontal ellipsis (…)?", choices: ["&hellip;", "&dots;", "&ellipsis;", "&...;"], answer: "&hellip;" },
+      { question: "Which tag defines a section break (§)?", choices: ["&sect;", "&break;", "&para;", "&section;"], answer: "&sect;" },
+      { question: "Which tag defines a paragraph mark (¶)?", choices: ["&para;", "&sect;", "&p;", "&para_mark;"], answer: "&para;" },
+      { question: "Which tag defines a dagger symbol (†)?", choices: ["&dagger;", "&ddagger;", "&asterisk;", "&symbol;"], answer: "&dagger;" },
+      { question: "Which tag defines a double dagger symbol (‡)?", choices: ["&Dagger;", "&dagger;", "&double;", "&symbol;"], answer: "&Dagger;" },
+      { question: "Which tag defines a fraction one half (½)?", choices: ["&frac12;", "&half;", "&fraction;", "&one_half;"], answer: "&frac12;" },
+      { question: "Which tag defines a fraction one quarter (¼)?", choices: ["&frac14;", "&quarter;", "&frac;", "&one_quarter;"], answer: "&frac14;" },
+      { question: "Which tag defines a fraction three quarters (¾)?", choices: ["&frac34;", "&three_quarters;", "&frac;", "&3_4;"], answer: "&frac34;" },
+      { question: "Which tag defines a Greek letter alpha (α)?", choices: ["&alpha;", "&beta;", "&gamma;", "&delta;"], answer: "&alpha;" },
+      { question: "Which tag defines a Greek letter beta (β)?", choices: ["&beta;", "&alpha;", "&gamma;", "&theta;"], answer: "&beta;" },
+      { question: "Which tag defines a Greek letter gamma (γ)?", choices: ["&gamma;", "&beta;", "&alpha;", "&epsilon;"], answer: "&gamma;" },
+      { question: "Which tag defines a Greek letter delta (δ)?", choices: ["&delta;", "&gamma;", "&epsilon;", "&zeta;"], answer: "&delta;" },
+      { question: "Which tag defines a Greek letter epsilon (ε)?", choices: ["&epsilon;", "&delta;", "&zeta;", "&eta;"], answer: "&epsilon;" },
+      { question: "Which tag defines a Greek letter theta (θ)?", choices: ["&theta;", "&phi;", "&psi;", "&omega;"], answer: "&theta;" },
+      { question: "Which tag defines a Greek letter phi (φ)?", choices: ["&phi;", "&theta;", "&psi;", "&chi;"], answer: "&phi;" },
+      { question: "Which tag defines a Greek letter psi (ψ)?", choices: ["&psi;", "&phi;", "&omega;", "&xi;"], answer: "&psi;" },
+      { question: "Which tag defines a Greek letter omega (ω)?", choices: ["&omega;", "&psi;", "&chi;", "&phi;"], answer: "&omega;" },
+      { question: "Which tag defines a mathematical integral symbol (∫)?", choices: ["&int;", "&sum;", "&prod;", "&integral;"], answer: "&int;" },
+      { question: "Which tag defines a mathematical sum symbol (∑)?", choices: ["&sum;", "&int;", "&prod;", "&sigma;"], answer: "&sum;" },
+      { question: "Which tag defines a mathematical product symbol (∏)?", choices: ["&prod;", "&sum;", "&int;", "&pi;"], answer: "&prod;" },
+      { question: "Which tag defines a mathematical infinity symbol (∞)?", choices: ["&infin;", "&inf;", "&infinity;", "&infinite;"], answer: "&infin;" },
+      { question: "Which tag defines a mathematical approximately equal symbol (≈)?", choices: ["&asymp;", "&approx;", "&equal;", "&sim;"], answer: "&asymp;" },
+      { question: "Which tag defines a mathematical not equal symbol (≠)?", choices: ["&ne;", "&not_eq;", "&noteq;", "&unequal;"], answer: "&ne;" },
+      { question: "Which tag defines a mathematical less than or equal symbol (≤)?", choices: ["&le;", "&lte;", "&less_eq;", "&<=;"], answer: "&le;" },
+      { question: "Which tag defines a mathematical greater than or equal symbol (≥)?", choices: ["&ge;", "&gte;", "&greater_eq;", "&>=;"], answer: "&ge;" },
+      { question: "Which tag defines a mathematical square root symbol (√)?", choices: ["&radic;", "&sqrt;", "&root;", "&squareroot;"], answer: "&radic;" },
+      { question: "Which tag defines a mathematical proportional to symbol (∝)?", choices: ["&prop;", "&proportional;", "&prop_to;", "&~;"], answer: "&prop;" },
+      { question: "Which tag defines a mathematical therefore symbol (∴)?", choices: ["&there4;", "&therefore;", "&so;", "&thus;"], answer: "&there4;" },
+      { question: "Which tag defines a mathematical because symbol (∵)?", choices: ["&becaus;", "&because;", "&since;", "&as;"], answer: "&becaus;" },
+      { question: "Which tag defines a mathematical angle symbol (∠)?", choices: ["&ang;", "&angle;", "&corner;", "&tri;"], answer: "&ang;" },
+      { question: "Which tag defines a mathematical perpendicular symbol (⊥)?", choices: ["&perp;", "&right_angle;", "&vertical;", "&orthogonal;"], answer: "&perp;" },
+      { question: "Which tag defines a mathematical parallel symbol (∥)?", choices: ["&par;", "&parallel;", "&line;", "&||;"], answer: "&par;" },
+      { question: "Which tag defines a mathematical congruent symbol (≅)?", choices: ["&cong;", "&similar;", "&eq;", "&identical;"], answer: "&cong;" },
+      { question: "Which tag defines a mathematical similar to symbol (~)?", choices: ["&sim;", "&approx;", "&like;", "&~;"], answer: "&sim;" },
+      { question: "Which tag defines a mathematical identical to symbol (≡)?", choices: ["&equiv;", "&identical;", "&same;", "&===;"], answer: "&equiv;" },
+      { question: "Which tag defines a mathematical empty set symbol (∅)?", choices: ["&empty;", "&null;", "&zero;", "&none;"], answer: "&empty;" },
+      { question: "Which tag defines a mathematical intersection symbol (∩)?", choices: ["&cap;", "&cup;", "&intersect;", "&meet;"], answer: "&cap;" },
+      { question: "Which tag defines a mathematical union symbol (∪)?", choices: ["&cup;", "&cap;", "&union;", "&join;"], answer: "&cup;" },
+      { question: "Which tag defines a mathematical subset symbol (⊂)?", choices: ["&sub;", "&subset;", "&is_in;", "&element_of;"], answer: "&sub;" },
+      { question: "Which tag defines a mathematical superset symbol (⊃)?", choices: ["&sup;", "&super;", "&contains;", "&has;"], answer: "&sup;" },
+      { question: "Which tag defines a mathematical element of symbol (∈)?", choices: ["&isin;", "&in;", "&element;", "&member_of;"], answer: "&isin;" },
+      { question: "Which tag defines a mathematical not an element of symbol (∉)?", choices: ["&notin;", "&notin;", "&nope;", "&not_in;"], answer: "&notin;" },
+      { question: "Which tag defines a mathematical for all symbol (∀)?", choices: ["&forall;", "&for_all;", "&every;", "&each;"], answer: "&forall;" },
+      { question: "Which tag defines a mathematical there exists symbol (∃)?", choices: ["&exist;", "&exists;", "&there_is;", "&some;"], answer: "&exist;" },
+      { question: "Which tag defines a mathematical logical and symbol (∧)?", choices: ["&and;", "&or;", "&both;", "&true;"], answer: "&and;" },
+      { question: "Which tag defines a mathematical logical or symbol (∨)?", choices: ["&or;", "&and;", "&either;", "&any;"], answer: "&or;" },
+      { question: "Which tag defines a mathematical implication symbol (⇒)?", choices: ["&rArr;", "&implies;", "&then;", "&=>;"], answer: "&rArr;" },
+      { question: "Which tag defines a mathematical equivalence symbol (⇔)?", choices: ["&hArr;", "&iff;", "&equivalent;", "&<=>;"], answer: "&hArr;" },
+      { question: "Which tag defines a mathematical negation symbol (¬)?", choices: ["&not;", "&neg;", "&no;", "&false;"], answer: "&not;" },
+      { question: "Which tag defines a mathematical therefore symbol (∴)?", choices: ["&there4;", "&therefore;", "&so;", "&thus;"], answer: "&there4;" },
+      { question: "Which tag defines a mathematical factorial symbol (!)?", choices: ["!", "&fact;", "&factorial;", "&exclamation;"], answer: "!" },
+      { question: "Which tag defines a mathematical percentage symbol (%)?", choices: ["%", "&percent;", "&perc;", "&%;"], answer: "%" },
+      { question: "Which tag defines a mathematical per thousand symbol (‰)?", choices: ["&permil;", "&per_thousand;", "&per_mille;", "&o/oo;"], answer: "&permil;" },
+      { question: "Which tag defines a mathematical caret symbol (^)?", choices: ["^", "&caret;", "&power;", "&up;"], answer: "^" },
+      { question: "Which tag defines a mathematical tilde symbol (~)?", choices: ["~", "&tilde;", "&wave;", "&wavy_line;"], answer: "~" },
+      { question: "Which tag defines a mathematical underscore symbol (_)?", choices: ["_", "&underscore;", "&low_line;", "&bottom_line;"], answer: "_" },
+      { question: "Which tag defines a mathematical backslash symbol (\\)?", choices: ["\\", "&backslash;", "&reverse_slash;", "&bslash;"], answer: "\\" },
+      { question: "Which tag defines a mathematical forward slash symbol (/)?", choices: ["/", "&forwardslash;", "&slash;", "&fslash;"], answer: "/" },
+      { question: "Which tag defines a mathematical pipe symbol (|)?", choices: ["|", "&pipe;", "&vbar;", "&vert;"], answer: "|" },
+      { question: "Which tag defines a mathematical colon symbol (:)?", choices: [":", "&colon;", "&col;", "&twodots;"], answer: ":" },
+      { question: "Which tag defines a mathematical semicolon symbol (;)?", choices: [";", "&semi;", "&semicol;", "&semicolon;"], answer: ";" },
+      { question: "Which tag defines a mathematical period symbol (.)?", choices: [".", "&period;", "&dot;", "&fullstop;"], answer: "." },
+      { question: "Which tag defines a mathematical comma symbol (,)?", choices: [",", "&comma;", "&seperator;", "&list_item;"], answer: "," },
+      { question: "Which tag defines a mathematical exclamation mark symbol (!)?", choices: ["!", "&exclam;", "&bang;", "&exc;"], answer: "!" },
+      { question: "Which tag defines a mathematical question mark symbol (?)?", choices: ["?", "&quest;", "&ask;", "&qmark;"], answer: "?" },
+      { question: "Which tag defines a mathematical at symbol (@)?", choices: ["@", "&commat;", "&at;", "&atsign;"], answer: "@" },
+      { question: "Which tag defines a mathematical number sign symbol (#)?", choices: ["#", "&num;", "&hash;", "&pound;"], answer: "#" },
+      { question: "Which tag defines a mathematical dollar sign symbol ($)?", choices: ["$", "&dollar;", "&usd;", "&currency;"], answer: "$" },
+      { question: "Which tag defines a mathematical percent sign symbol (%)?", choices: ["%", "&percent;", "&perc;", "&%;"], answer: "%" },
+      { question: "Which tag defines a mathematical ampersand symbol (&)?", choices: ["&", "&amp;", "&and;", "&symbol;"], answer: "&amp;" },
+      { question: "Which tag defines a mathematical asterisk symbol (*)?", choices: ["*", "&ast;", "&star;", "&multiplication;"], answer: "*" },
+      { question: "Which tag defines a mathematical plus sign (+)?", choices: ["+", "&plus;", "&add;", "&positive;"], answer: "+" },
+      { question: "Which tag defines a mathematical minus sign (-)?", choices: ["-", "&minus;", "&subtract;", "&negative;"], answer: "-" },
+      { question: "Which tag defines a mathematical equals sign (=)?", choices: ["=", "&equals;", "&eq;", "&same;"], answer: "=" },
+      { question: "Which tag defines a mathematical less than sign (<)?", choices: ["<", "<", "&lessthan;", "&smaller;"], answer: "<" },
+      { question: "Which tag defines a mathematical greater than sign (>)?", choices: [">", ">", "&greaterthan;", "&larger;"], answer: ">" },
+      { question: "Which tag defines a mathematical question mark symbol (?)?", choices: ["?", "&quest;", "&ask;", "&qmark;"], answer: "?" },
+      { question: "Which tag defines a mathematical left parenthesis symbol ((", choices: ["(", "&lpar;", "&leftparen;", "&open_paren;"], answer: "(" },
+      { question: "Which tag defines a mathematical right parenthesis symbol ())", choices: [")", "&rpar;", "&rightparen;", "&close_paren;"], answer: ")" },
+      { question: "Which tag defines a mathematical left bracket symbol ([)", choices: ["[", "&lbrack;", "&leftbracket;", "&open_bracket;"], answer: "[" },
+      { question: "Which tag defines a mathematical right bracket symbol (])", choices: ["]", "&rbrack;", "&rightbracket;", "&close_bracket;"], answer: "]" },
+      { question: "Which tag defines a mathematical left brace symbol ({)", choices: ["{", "&lbrace;", "&leftbrace;", "&open_brace;"], answer: "{" },
+      { question: "Which tag defines a mathematical right brace symbol (})", choices: ["}", "&rbrace;", "&rightbrace;", "&close_brace;"], answer: "}" },
+      { question: "Which tag defines a mathematical vertical bar symbol (|)", choices: ["|", "&verbar;", "&pipe;", "&vline;"], answer: "|" },
+      { question: "Which tag defines a mathematical tilde symbol (~)", choices: ["~", "&tilde;", "&wave;", "&wavy_line;"], answer: "~" },
+      { question: "Which tag defines a mathematical circumflex symbol (^)", choices: ["^", "&circumflex;", "&caret;", "&hat;"], answer: "^" },
+      { question: "Which tag defines a mathematical grave accent symbol (`)", choices: ["`", "&grave;", "&backtick;", "&accent;"], answer: "`" },
+      { question: "Which tag defines a mathematical acute accent symbol (´)", choices: ["´", "&acute;", "&prime;", "&accent;"], answer: "´" },
+      { question: "Which tag defines a mathematical diaeresis symbol (¨)", choices: ["¨", "&uml;", "&double_dot;", "&diaeresis;"], answer: "¨" },
+      { question: "Which tag defines a mathematical cedilla symbol (¸)", choices: ["¸", "&cedil;", "&hook;", "&tail;"], answer: "¸" },
+      { question: "Which tag defines a mathematical caron symbol (ˇ)", choices: ["ˇ", "&caron;", "&check;", "&breve;"], answer: "ˇ" },
+      { question: "Which tag defines a mathematical breve symbol (˘)", choices: ["˘", "&breve;", "&caron;", "&hook;"], answer: "˘" },
+      { question: "Which tag defines a mathematical macron symbol (¯)", choices: ["¯", "&macron;", "&bar;", "&line_above;"], answer: "¯" },
+      { question: "Which tag defines a mathematical dot above symbol (˙)", choices: ["˙", "&dot;", "&overdot;", "&accent;"], answer: "˙" },
+      { question: "Which tag defines a mathematical ring above symbol (˚)", choices: ["˚", "&aring;", "&ring;", "&circle_above;"], answer: "˚" },
+      { question: "Which tag defines a mathematical double acute accent symbol (˝)", choices: ["˝", "&dblac;", "&double_acute;", "&accent;"], answer: "˝" },
+      { question: "Which tag defines a mathematical ogonek symbol (˛)", choices: ["˛", "&ogon;", "&hook_below;", "&tail_below;"], answer: "˛" },
+      { question: "Which tag defines a mathematical stroke symbol (̷)", choices: ["̷", "&stroke;", "&slash_through;", "&diagonal;"], answer: "̷" },
+      { question: "Which tag defines a mathematical combining tilde symbol (̃)", choices: ["̃", "&tilde_combining;", "&comb_tilde;", "&above_tilde;"], answer: "̃" },
+      { question: "Which tag defines a mathematical combining dot symbol (̇)", choices: ["̇", "&dot_combining;", "&comb_dot;", "&above_dot;"], answer: "̇" },
+      { question: "Which tag defines a mathematical combining ring above symbol (̊)", choices: ["̊", "&ring_combining;", "&comb_ring;", "&above_ring;"], answer: "̊" },
+      { question: "Which tag defines a mathematical combining breve symbol (˘)", choices: ["˘", "&breve_combining;", "&comb_breve;", "&above_breve;"], answer: "˘" },
+      { question: "Which tag defines a mathematical combining caron symbol (ˇ)", choices: ["ˇ", "&caron_combining;", "&comb_caron;", "&above_caron;"], answer: "ˇ" },
+      { question: "Which tag defines a mathematical combining macron symbol (¯)", choices: ["¯", "&macron_combining;", "&comb_macron;", "&above_macron;"], answer: "¯" },
+      { question: "Which tag defines a mathematical combining ogonek symbol (˛)", choices: ["˛", "&ogonek_combining;", "&comb_ogonek;", "&below_hook;"], answer: "˛" },
+      { question: "Which tag defines a mathematical combining cedilla symbol (¸)", choices: ["¸", "&cedilla_combining;", "&comb_cedil;", "&below_tail;"], answer: "¸" },
+      { question: "Which tag defines a mathematical combining diaeresis symbol (¨)", choices: ["¨", "&diaeresis_combining;", "&comb_uml;", "&above_dots;"], answer: "¨" },
+      { question: "Which tag defines a mathematical combining acute accent symbol (´)", choices: ["´", "&acute_combining;", "&comb_acute;", "&above_slash;"], answer: "´" },
+      { question: "Which tag defines a mathematical combining grave accent symbol (`)", choices: ["`", "&grave_combining;", "&comb_grave;", "&above_backtick;"], answer: "`" },
+      { question: "Which tag defines a mathematical combining double acute accent symbol (˝)", choices: ["˝", "&dblac_combining;", "&comb_double_acute;", "&above_two_slashes;"], answer: "˝" },
+      { question: "Which tag defines a mathematical combining stroke symbol (̷)", choices: ["̷", "&stroke_combining;", "&comb_stroke;", "&diagonal_slash;"], answer: "̷" },
+      { question: "Which tag defines a mathematical combining tilde symbol (̃)", choices: ["̃", "&tilde_combining;", "&comb_tilde;", "&above_wave;"], answer: "̃" }
+    ];
+    
+    // Shuffle function
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    let currentUser = '';
+    let lives = 5;
+    let maxLives = 5;
+    let currentLevelIndex = 0;
+    let shuffledLevels = [];
+
+    function prepareLevels(username) {
+      const savedOrder = localStorage.getItem(`shuffled-${username}`);
+      if (savedOrder) {
+        shuffledLevels = JSON.parse(savedOrder);
+      } else {
+        shuffledLevels = shuffle(rawLevels);
+        localStorage.setItem(`shuffled-${username}`, JSON.stringify(shuffledLevels));
+      }
+    }
+
+    function startGame() {
+      const usernameInput = document.getElementById('username');
+      if (!usernameInput.value.trim()) return alert("Please enter a username!");
+      currentUser = usernameInput.value.trim();
+      const userData = JSON.parse(localStorage.getItem(`user-${currentUser}`) || "{}");
+      if (userData.blockedUntil && new Date(userData.blockedUntil) > new Date()) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('blocked-screen').classList.remove('hidden');
+        startCountdown(new Date(userData.blockedUntil));
+        return;
+      }
+
+      prepareLevels(currentUser);
+      currentLevelIndex = parseInt(userData.level) || 0;
+      lives = parseInt(userData.lives) || 5;
+      maxLives = parseInt(userData.maxLives) || 5;
+      document.body.className = userData.theme || "";
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      updateLivesDisplay();
+      loadLevel(currentLevelIndex);
+    }
+
+    function updateLivesDisplay() {
+      document.getElementById('lives-display').textContent = `Lives: ${lives}/${maxLives}`;
+    }
+
+    function loadLevel(index) {
+      if (index >= shuffledLevels.length) {
+        showVictory();
+        return;
+      }
+      document.getElementById('level-number').textContent = index + 1;
+      const container = document.getElementById('level-container');
+      container.innerHTML = '<div class="feedback" id="feedback"></div>';
+      const levelData = shuffledLevels[index];
+      const levelDiv = document.createElement('div');
+      levelDiv.className = "level";
+      levelDiv.innerHTML = `<div class="question">${levelData.question}</div>`;
+      const choices = shuffle(levelData.choices);
+      levelDiv.innerHTML += `<div class="choices"></div>`;
+      const choicesContainer = levelDiv.querySelector('.choices');
+      choices.forEach(choice => {
+        const btn = document.createElement('div');
+        btn.className = "choice";
+        btn.textContent = choice;
+        btn.onclick = () => checkAnswer(choice, levelData.answer, index);
+        choicesContainer.appendChild(btn);
+      });
+      container.appendChild(levelDiv);
+    }
+
+    function checkAnswer(selected, correct, index) {
+      const feedbackEl = document.getElementById("feedback");
+      if (selected === correct) {
+        feedbackEl.textContent = "Correct! 🎉";
+        feedbackEl.className = "feedback correct";
+        feedbackEl.style.opacity = 1;
+        currentLevelIndex++;
+        adjustMaxLives();
+        saveProgress();
+        setTimeout(() => {
+          feedbackEl.style.opacity = 0;
+          loadLevel(currentLevelIndex);
+        }, 1000);
+      } else {
+        feedbackEl.textContent = "Wrong! Try again.";
+        feedbackEl.className = "feedback wrong";
+        feedbackEl.style.opacity = 1;
+        lives--;
+        updateLivesDisplay();
+        saveProgress();
+        if (lives <= 0) blockUser();
+        setTimeout(() => {
+          feedbackEl.style.opacity = 0;
+        }, 1500);
+      }
+    }
+
+    function blockUser() {
+      const now = new Date();
+      const unlockTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+      localStorage.setItem(`user-${currentUser}`, JSON.stringify({
+        level: currentLevelIndex,
+        lives: 0,
+        maxLives,
+        blockedUntil: unlockTime.toISOString(),
+        theme: document.body.className
+      }));
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('blocked-screen').classList.remove('hidden');
+      startCountdown(unlockTime);
+    }
+
+    function startCountdown(until) {
+      const timerEl = document.getElementById('countdown-timer');
+      const interval = setInterval(() => {
+        const now = new Date();
+        const diff = until - now;
+        if (diff <= 0) {
+          clearInterval(interval);
+          timerEl.textContent = "You're unblocked!";
+          setTimeout(() => {
+            localStorage.removeItem(`user-${currentUser}`);
+            document.getElementById('blocked-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+          }, 2000);
+        } else {
+          const hours = String(Math.floor((diff / (1000 * 60 * 60 % 24)).padStart(2, '0')));
+          const minutes = String(Math.floor((diff / (1000 * 60 % 60)).padStart(2, '0')));
+          const seconds = String(Math.floor(diff / 1000 % 60)).padStart(2, '0');
+          timerEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+      }, 1000);
+    }
+
+    function adjustMaxLives() {
+      if (currentLevelIndex === 25) maxLives = 4;
+      if (currentLevelIndex === 30) maxLives = 3;
+      if (currentLevelIndex === 75) maxLives = 2;
+      if (currentLevelIndex === 100) maxLives = 1;
+      if (lives > maxLives) lives = maxLives;
+      updateLivesDisplay();
+    }
+
+    function saveProgress() {
+      localStorage.setItem(`user-${currentUser}`, JSON.stringify({
+        level: currentLevelIndex,
+        lives,
+        maxLives,
+        theme: document.body.className
+      }));
+    }
+
+    function setTheme(theme) {
+      document.body.className = theme;
+      saveProgress();
+    }
+
+    function showVictory() {
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('victory-screen').classList.remove('hidden');
+      document.getElementById('final-username').textContent = currentUser;
+      const canvas = document.querySelector('.confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const particles = [];
+      for (let i = 0; i < 200; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 5 + 2,
+          dx: (Math.random() - 0.5) * 5,
+          dy: (Math.random() - 0.5) * 5,
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        });
+      }
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.dx;
+          p.y += p.dy;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function shareOnWhatsApp() {
+      const message = encodeURIComponent(`I completed the Code Hero game! Play it here: https://your-game-url.com`); 
+      window.open(`https://wa.me/?text=${message}`, '_blank');
+    }
+
+    // Initial setup
+    window.onload = () => {
+  const username = localStorage.getItem('user');
+  if (username && username !== 'undefined') {
+    const userData = JSON.parse(localStorage.getItem(`user-${username}`)) || {};
+    if (userData.blockedUntil && new Date(userData.blockedUntil) > new Date()) {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('blocked-screen').classList.remove('hidden');
+      startCountdown(new Date(userData.blockedUntil));
+    } else {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      currentLevelIndex = userData.level || 0;
+      lives = userData.lives || 5;
+      maxLives = userData.maxLives || 5;
+      document.body.className = userData.theme || "";
+      updateLivesDisplay();
+      loadLevel(currentLevelIndex);
+    }
+  }
+};
+  </script>
+</body>
+</html>
