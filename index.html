@@ -257,7 +257,7 @@
   { question: "Which tag defines a footer section?", choices: ["<footer>", "<bottom>", "<foot>", "<end>"], answer: "<footer>" },
   { question: "Which tag defines a navigation section?", choices: ["<nav>", "<menu>", "<list>", "<ul>"], answer: "<nav>" },
   { question: "Which tag defines the document type?", choices: ["<!DOCTYPE>", "<html>", "<doc>", "<head>"], answer: "<!DOCTYPE>" },
-      { question: "Which CSS property sets the text color?", choices: ["color", "text-color", "font-color", "background"], answer: "color" },
+  { question: "Which CSS property sets the text color?", choices: ["color", "text-color", "font-color", "background"], answer: "color" },
   { question: "Which property sets the background color?", choices: ["background-color", "color", "bg", "fill"], answer: "background-color" },
   { question: "Which property sets the font size?", choices: ["font-size", "text-size", "size", "font"], answer: "font-size" },
   { question: "Which property sets the font family?", choices: ["font-family", "font", "text-family", "font-type"], answer: "font-family" },
@@ -453,10 +453,10 @@
     }
 
     function adjustMaxLives() {
-      if (currentLevelIndex === 25) maxLives = 4;
-      if (currentLevelIndex === 30) maxLives = 3;
-      if (currentLevelIndex === 75) maxLives = 2;
-      if (currentLevelIndex === 100) maxLives = 1;
+      if (currentLevelIndex === 20) maxLives = 4;
+      if (currentLevelIndex === 40) maxLives = 3;
+      if (currentLevelIndex === 60) maxLives = 2;
+      if (currentLevelIndex === 80) maxLives = 1;
       if (lives > maxLives) lives = maxLives;
       updateLivesDisplay();
     }
